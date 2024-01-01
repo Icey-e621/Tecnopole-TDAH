@@ -72,7 +72,19 @@ Capture()
 while True:
 
     result, image = cam.read()
-    Images = []
+    results = model(image)
+
+    Final = np.squeeze(results.render())
+    if result == True:
+       
+       cv2.namedWindow("Frame", cv2.WINDOW_AUTOSIZE) 
+       cv2.imshow('Frame',Final)
+
+        # Press Q on keyboard to  exit
+       if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+    else: 
+        break
  
 
 
