@@ -76,8 +76,9 @@ while True:
     result, image = cam.read()
     images = []
     heatmaps = []
+    tmp = []
+    fig, ax = plt.subplots()
 
-    BGsub = cv2.bgsegm.createBackgroundSubtractorMOG()
     for Pers in People:
         images.append(image[int(Pers.box.y1):int(Pers.box.y2),int(Pers.box.x1):int(Pers.box.x2)])
 
@@ -85,32 +86,43 @@ while True:
     if Ticks > 1:
         for img in images:
             grisNow = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            fgmaskNow = BGsub.apply(grisNow)
-            grisNow = cv2.GaussianBlur(fgmaskNow, (5, 5), 0)
 
             grisBefore = cv2.cvtColor(lastImgs[i], cv2.COLOR_BGR2GRAY)
-            fgmaskBefore = BGsub.apply(grisBefore)
-            grisBefore = cv2.GaussianBlur(fgmaskBefore, (5, 5), 0)
 
             restados = cv2.absdiff(grisBefore, grisNow)
 
-            umbral = cv2.threshold(restados, 20, 255, cv2.THRESH_BINARY)[1]
+            umbral = cv2.threshold(restados, 35, 255, cv2.THRESH_BINARY)[1]
+            contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            for contour in contours:
+                # Get the bounding box of the contour
+                x, y, w, h = cv2.boundingRect(contour)
 
-            heatmaps.append(umbral)
+                # If the contour is too small, skip it
+                if w < 100 or h < 100:
+                    continue
+                
+                # Draw a rectangle around the contour
+                cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 1)
+
+                # Plot the movement on the map
+                ax.plot(x, y, 'ro')
+
+            heatmaps.append(img)
+            tmp.append(umbral)
             i += 1
     j = 0
     for htmp in heatmaps:
         cv2.imshow('Frame' + str(j),cv2.flip(htmp,1))
+        cv2.imshow('Frame*' + str(j),cv2.flip(tmp[0],1))
+        plt.pause(0.02)
         if not result:
             break
         j += 1
     if cv2.waitKey(10) & 0xFF == ord('q'):
         break
-    if 0xFF == ord('r'):
-        Capture()
     lastImgs = images
  
 
-
+plt.close()
 cam.release()
 cv2.destroyAllWindows()
