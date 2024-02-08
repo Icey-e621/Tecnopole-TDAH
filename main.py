@@ -1,6 +1,8 @@
+from os import error
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from sympy import frac, true
 import yolov5
 import torch
 
@@ -51,8 +53,8 @@ class Person:
        return str(Message)
    
 def Capture():
-   lastImgs = []
-   Ticks = 0   
+#   lastImgs = []
+#   Ticks = 0   
    result, image = cam.read()
    results = model(image,size=1280)
    Predictions = results.xyxy[0] # 0 because it is image 1
@@ -69,11 +71,11 @@ def Capture():
        Count += 1
        try:
            if Person("Joe " + str(Count),box) == Person[Count-1]:
-              break;
+              break
            elif Person("Joe " + str(Count),box) != Person[Count-1]:
               People.insert(Count,Person("Joe " + str(Count),box) == Person[Count-1])
-       except:
-            print("error")
+       except error:
+            print(error)
        People.append(Person("Joe " + str(Count),box))
    print(People[0])
    
@@ -89,7 +91,7 @@ while True:
 
     for Pers in People:
         images.append(image[int(Pers.box.y1):int(Pers.box.y2),int(Pers.box.x1):int(Pers.box.x2)])
-
+        
     i = 0
     if Ticks > 1:
         for img in images:
@@ -103,14 +105,14 @@ while True:
             contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for contour in contours:
                 # Get the bounding box of the contour
-                x, y, w, h = cv2.boundingRect(contour)
+                x, y, w, h = cv2.boundingRect(umbral)
 
                 # If the contour is too small, skip it
                 if w < 100 or h < 100:
                     continue
                 
                 # Draw a rectangle around the contour
-                cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 1)
+                cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 1)
 
                 # Plot the movement on the map
                 ax.plot(x, y, 'ro')
@@ -119,18 +121,29 @@ while True:
             tmp.append(umbral)
             i += 1
     j = 0
-    
+    Pair = []
     for htmp in heatmaps:
-        cv2.imshow('Frame' + str(j),cv2.flip(htmp,1))
-        cv2.imshow('Frame*' + str(j),cv2.flip(tmp[j],1))
+        Pair.append(np.concatenate((cv2.flip(htmp,1),cv2.flip(tmp[j],1)), axis=0)) #1 = movement map, 2 = normal
         plt.pause(0.02)
-        if not result:
-            break
         j += 1
+    
+    Last = 0
+    Now = 0
+    w = 0
+    for i in Pair:
+        if w == 0:
+            Last = i
+            break
+        Last = np.concatenate((i,Last), axis = 1)
+        w += 1
+    
+    while (result == true):
+        cv2.imshow("frame", Last)
     if cv2.waitKey(10) & 0xFF == ord('q'):
         break
-    if cv2.waitKey(10) & 0xFF == ord('y'):
-        lastImgs = images
+
+    lastImgs = images
+    if 0xFF == ord("y"):
         Capture()
  
 
