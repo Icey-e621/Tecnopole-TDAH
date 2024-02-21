@@ -1,11 +1,12 @@
 import numpy as np
 import cv2
+import cv2
 import matplotlib.pyplot as plt
 import yolov5
 import torch
 
 # load pretrained model
-model = yolov5.load('yolov5m.pt')
+model = yolov5.load("yolov5m.pt")
 model.conf = 0.25  # NMS confidence threshold
 model.iou = 0.45  # NMS IoU threshold
 model.agnostic = False  # NMS class-agnostic
@@ -67,8 +68,17 @@ def Capture():
        box = Box(Prediction[0],Prediction[1],Prediction[2],Prediction[3])
        box.Amplify(10)
        Count += 1
+       try:
+           if Person("Joe " + str(Count),box) == Person[Count-1]:
+              break
+           
+           elif Person("Joe " + str(Count),box) != Person[Count-1]:
+              People.insert(Count,Person("Joe " + str(Count),box) == Person[Count-1])
+       except:
+            print("error")
        People.append(Person("Joe " + str(Count),box))
-
+   print(People[0])
+   
 
 Capture()
 while True:
@@ -111,9 +121,10 @@ while True:
             tmp.append(umbral)
             i += 1
     j = 0
+    
     for htmp in heatmaps:
         cv2.imshow('Frame' + str(j),cv2.flip(htmp,1))
-        cv2.imshow('Frame*' + str(j),cv2.flip(tmp[0],1))
+        cv2.imshow('Frame*' + str(j),cv2.flip(tmp[j],1))
         plt.pause(0.02)
         if not result:
             break
