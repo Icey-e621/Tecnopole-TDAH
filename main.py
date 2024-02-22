@@ -1,6 +1,7 @@
 from os import error
 import numpy as np
 import cv2
+import cv2
 import matplotlib.pyplot as plt
 from sympy import frac, true
 import yolov5
@@ -72,6 +73,7 @@ def Capture():
        try:
            if Person("Joe " + str(Count),box) == Person[Count-1]:
               break
+           
            elif Person("Joe " + str(Count),box) != Person[Count-1]:
               People.insert(Count,Person("Joe " + str(Count),box) == Person[Count-1])
        except error:
@@ -141,10 +143,7 @@ while True:
         cv2.imshow("frame", Last)
     if cv2.waitKey(10) & 0xFF == ord('q'):
         break
-
     lastImgs = images
-    if 0xFF == ord("y"):
-        Capture()
  
 
 plt.close()
