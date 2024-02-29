@@ -86,6 +86,13 @@ def Capture():
             except error:
                  print(error)
 
+#we pass the format in wich the videos will be saved
+cnt = 0
+for i in People:
+    cnt +=1
+    out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 50, (cv2.CAP_PROP_FRAME_WIDTH,cv2.CAP_PROP_FRAME_HEIGTH  ))
+
+
 Capture()
 while True:
     Ticks += 1
@@ -137,7 +144,7 @@ while True:
             j += 1
 
         Last = 0
-        Now = 0
+        Now = 0 
         w = 0
         for tuples in Pair:
             if w == 0:
@@ -147,7 +154,7 @@ while True:
             Last = np.concatenate((Last, tuples),axis=0)
             w += 1
 
-        if cv2.waitKey(10) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     lastImgs = images
  
