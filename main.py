@@ -102,7 +102,6 @@ while True:
     i = 0
     if Ticks > 1:
         for img in images:
-            print("here")
             grisNow = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
             grisBefore = cv2.cvtColor(lastImgs[i], cv2.COLOR_BGR2GRAY)
@@ -110,6 +109,7 @@ while True:
             restados = cv2.absdiff(grisBefore, grisNow)
 
             umbral = cv2.threshold(restados, 35, 255, cv2.THRESH_BINARY)[1]
+
             contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for contour in contours:
                 # Get the bounding box of the contour
@@ -126,12 +126,12 @@ while True:
                 ax.plot(x, y, 'ro')
 
             heatmaps.append(img)
-            tmp.append(umbral)
+            tmp.append(cv2.merge((umbral,umbral,umbral)))
             i += 1
         j = 0
         Pair = []
         for htmp in heatmaps:
-            Cimage = cv2.hconcat([cv2.flip(htmp,1),cv2.flip(tmp[j],1)])
+            Cimage = np.concatenate((cv2.flip(htmp,1),cv2.flip(tmp[j],1)),axis=1)
             Pair.append(Cimage) #1 = movement map, 2 = normal (Concatenated horizontally)
             plt.pause(0.02)
             j += 1
@@ -142,13 +142,10 @@ while True:
         for tuples in Pair:
             if w == 0:
                 Last = tuples
+                
                 break
-            Last = cv2.vconcat([Last, tuples])
+            Last = np.concatenate((Last, tuples),axis=0)
             w += 1
-
-        while (result == true):
-           # cv2.imshow("frame", Last)
-            cv2.imshow("frame", cv2.hconcat([heatmaps[0],tmp[0]]))
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
