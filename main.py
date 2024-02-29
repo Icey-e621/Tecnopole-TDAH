@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import cv2
 import matplotlib.pyplot as plt
 import yolov5
 import torch
@@ -69,7 +70,8 @@ def Capture():
        Count += 1
        try:
            if Person("Joe " + str(Count),box) == Person[Count-1]:
-              break;
+              break
+           
            elif Person("Joe " + str(Count),box) != Person[Count-1]:
               People.insert(Count,Person("Joe " + str(Count),box) == Person[Count-1])
        except:
@@ -129,9 +131,7 @@ while True:
         j += 1
     if cv2.waitKey(10) & 0xFF == ord('q'):
         break
-    if cv2.waitKey(10) & 0xFF == ord('y'):
-        lastImgs = images
-        Capture()
+    lastImgs = images
  
 
 plt.close()
