@@ -1,7 +1,8 @@
+from os import error
 import numpy as np
 import cv2
-import cv2
 import matplotlib.pyplot as plt
+from sympy import frac, true
 import yolov5
 import torch
 
@@ -51,9 +52,12 @@ class Person:
        Message = str(self.name) + " is located in the box made of the points " + str(self.box.Pt1) + " and " + str(self.box.Pt2)
        return str(Message)
    
+TimesCalled = 0
 def Capture():
-   lastImgs = []
-   Ticks = 0   
+#   lastImgs = []
+#   Ticks = 0 
+   global TimesCalled
+   TimesCalled = 1 + TimesCalled
    result, image = cam.read()
    results = model(image,size=1280)
    Predictions = results.xyxy[0] # 0 because it is image 1
@@ -68,17 +72,19 @@ def Capture():
        box = Box(Prediction[0],Prediction[1],Prediction[2],Prediction[3])
        box.Amplify(10)
        Count += 1
-       try:
-           if Person("Joe " + str(Count),box) == Person[Count-1]:
-              break
-           
-           elif Person("Joe " + str(Count),box) != Person[Count-1]:
-              People.insert(Count,Person("Joe " + str(Count),box) == Person[Count-1])
-       except:
-            print("error")
-       People.append(Person("Joe " + str(Count),box))
-   print(People[0])
-   
+       if TimesCalled == 1:
+           People.append(Person("Joe " + str(Count),box))
+       else:
+            try:
+                if not People or Person("Joe " + str(Count),box) == People[Count-1]:
+                   People.append(Person("Joe " + str(Count),box))
+
+                elif Person("Joe " + str(Count),box) != People[Count-1]:
+                   print("t")
+                   People.insert(Count,Person("Joe " + str(Count),box) == People[Count-1])
+
+            except error:
+                 print(error)
 
 Capture()
 while True:
@@ -90,11 +96,13 @@ while True:
     fig, ax = plt.subplots()
 
     for Pers in People:
+        print("here now")
         images.append(image[int(Pers.box.y1):int(Pers.box.y2),int(Pers.box.x1):int(Pers.box.x2)])
-
+        
     i = 0
     if Ticks > 1:
         for img in images:
+            print("here")
             grisNow = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
             grisBefore = cv2.cvtColor(lastImgs[i], cv2.COLOR_BGR2GRAY)
@@ -105,14 +113,14 @@ while True:
             contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for contour in contours:
                 # Get the bounding box of the contour
-                x, y, w, h = cv2.boundingRect(contour)
+                x, y, w, h = cv2.boundingRect(umbral)
 
                 # If the contour is too small, skip it
                 if w < 100 or h < 100:
                     continue
                 
                 # Draw a rectangle around the contour
-                cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 1)
+                cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 1)
 
                 # Plot the movement on the map
                 ax.plot(x, y, 'ro')
@@ -120,17 +128,30 @@ while True:
             heatmaps.append(img)
             tmp.append(umbral)
             i += 1
-    j = 0
-    
-    for htmp in heatmaps:
-        cv2.imshow('Frame' + str(j),cv2.flip(htmp,1))
-        cv2.imshow('Frame*' + str(j),cv2.flip(tmp[j],1))
-        plt.pause(0.02)
-        if not result:
+        j = 0
+        Pair = []
+        for htmp in heatmaps:
+            Cimage = cv2.hconcat([cv2.flip(htmp,1),cv2.flip(tmp[j],1)])
+            Pair.append(Cimage) #1 = movement map, 2 = normal (Concatenated horizontally)
+            plt.pause(0.02)
+            j += 1
+
+        Last = 0
+        Now = 0
+        w = 0
+        for tuples in Pair:
+            if w == 0:
+                Last = tuples
+                break
+            Last = cv2.vconcat([Last, tuples])
+            w += 1
+
+        while (result == true):
+           # cv2.imshow("frame", Last)
+            cv2.imshow("frame", cv2.hconcat([heatmaps[0],tmp[0]]))
+
+        if cv2.waitKey(10) & 0xFF == ord('q'):
             break
-        j += 1
-    if cv2.waitKey(10) & 0xFF == ord('q'):
-        break
     lastImgs = images
  
 
