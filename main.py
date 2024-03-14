@@ -1,10 +1,11 @@
-from os import error
+import os
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 from sympy import frac, true
 import yolov5
 import torch
+import zipfile
 
 # load pretrained model
 model = yolov5.load("yolov5m.pt")
@@ -15,7 +16,8 @@ model.multi_label = False  # NMS multiple labels per box
 model.max_det = 1000  # maximum number of detections per image
 model.cpu  # i.e. device=torch.device(0)
 
-cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+video_path = "example.mp4"
+cam = cv2.VideoCapture(video_path)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280) 
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
@@ -23,6 +25,10 @@ People = []
 PeopleAmountInit = 0
 lastImgs = []
 Ticks = 0
+
+################################################################
+##################    Classes   ################################
+################################################################
 
 class Box:
     def __init__(self,x1,y1,x2,y2):
@@ -52,6 +58,25 @@ class Person:
        Message = str(self.name) + " is located in the box made of the points " + str(self.box.Pt1) + " and " + str(self.box.Pt2)
        return str(Message)
    
+
+
+global video_writer; video_writer = []
+
+def save_heatmaps_to_video(heatmap, output_path, h):
+    if STOP:
+        video_writer[h].release()
+        return
+    
+    # Create a VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    fps = 20.0
+    frame_size = (heatmap.shape[1], heatmap.shape[0])
+
+    try: video_writer[h] in globals()
+    except: video_writer.append(cv2.VideoWriter(output_path, fourcc, fps, frame_size))
+
+    video_writer[h].write(cv2.merge((heatmap,heatmap,heatmap)).astype('uint8'))
+
 TimesCalled = 0
 def Capture():
 #   lastImgs = []
@@ -83,26 +108,32 @@ def Capture():
                    print("t")
                    People.insert(Count,Person("Joe " + str(Count),box) == People[Count-1])
 
-            except error:
-                 print(error)
+            except os.error:
+                 print(os.error)
+
 
 Capture()
 while True:
     Ticks += 1
     result, image = cam.read()
     images = []
-    heatmaps = []
+    global heatmaps; heatmaps = []
     tmp = []
     fig, ax = plt.subplots()
 
     for Pers in People:
-        print("here now")
-        images.append(image[int(Pers.box.y1):int(Pers.box.y2),int(Pers.box.x1):int(Pers.box.x2)])
+        global STOP; STOP = False
         
+        try:
+            images.append(image[int(Pers.box.y1):int(Pers.box.y2),int(Pers.box.x1):int(Pers.box.x2)])
+        except:
+            STOP = true
+            break
+
+
     i = 0
     if Ticks > 1:
         for img in images:
-            print("here")
             grisNow = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
             grisBefore = cv2.cvtColor(lastImgs[i], cv2.COLOR_BGR2GRAY)
@@ -110,6 +141,7 @@ while True:
             restados = cv2.absdiff(grisBefore, grisNow)
 
             umbral = cv2.threshold(restados, 35, 255, cv2.THRESH_BINARY)[1]
+
             contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for contour in contours:
                 # Get the bounding box of the contour
@@ -118,42 +150,40 @@ while True:
                 # If the contour is too small, skip it
                 if w < 100 or h < 100:
                     continue
-                
-                # Draw a rectangle around the contour
-                cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 1)
 
-                # Plot the movement on the map
-                ax.plot(x, y, 'ro')
 
-            heatmaps.append(img)
-            tmp.append(umbral)
+
+            heatmaps.append(umbral)
             i += 1
-        j = 0
-        Pair = []
+        h = 0
+        zip_filename = "heatmaps.zip"
+    
         for htmp in heatmaps:
-            Cimage = cv2.hconcat([cv2.flip(htmp,1),cv2.flip(tmp[j],1)])
-            Pair.append(Cimage) #1 = movement map, 2 = normal (Concatenated horizontally)
-            plt.pause(0.02)
-            j += 1
+            Cimage = cv2.flip(htmp, 1)
+            output_path = "heatmap"+str(h)+".avi"
+            save_heatmaps_to_video(Cimage, output_path,h)
+            h+=1
 
-        Last = 0
-        Now = 0
-        w = 0
-        for tuples in Pair:
-            if w == 0:
-                Last = tuples
-                break
-            Last = cv2.vconcat([Last, tuples])
-            w += 1
-
-        while (result == true):
-           # cv2.imshow("frame", Last)
-            cv2.imshow("frame", cv2.hconcat([heatmaps[0],tmp[0]]))
-
-        if cv2.waitKey(10) & 0xFF == ord('q'):
+        
+        if cv2.waitKey(0) & 0xFF == ord('q'):
+            break
+        if STOP:
+            j=0
+        
+            for htmp in heatmaps:
+                output_path = "heatmap"+str(j)+".avi"
+                print("errasing")
+                j+=1
+            print("ended")
             break
     lastImgs = images
  
+
+if STOP:
+    for htmp in heatmaps:
+        Cimage = cv2.flip(htmp, 1)
+        output_path = "heatmap.mp4"
+        save_heatmaps_to_video(Cimage, output_path)
 
 plt.close()
 cam.release()
