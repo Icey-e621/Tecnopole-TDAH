@@ -21,6 +21,8 @@ cam = cv2.VideoCapture(video_path)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280) 
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
+global StartPhoto; StartPhoto = 0
+
 People = []
 PeopleAmountInit = 0
 lastImgs = []
@@ -118,21 +120,22 @@ while True:
     result, image = cam.read()
     images = []
     global heatmaps; heatmaps = []
-    tmp = []
     fig, ax = plt.subplots()
-
     for Pers in People:
         global STOP; STOP = False
         
         try:
             images.append(image[int(Pers.box.y1):int(Pers.box.y2),int(Pers.box.x1):int(Pers.box.x2)])
+            if Ticks == 1:
+                StartPhoto = images[0]
         except:
             STOP = true
             break
 
-
+    global tmp; tmp = []
     i = 0
     if Ticks > 1:
+        umb = []
         for img in images:
             grisNow = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -141,18 +144,27 @@ while True:
             restados = cv2.absdiff(grisBefore, grisNow)
 
             umbral = cv2.threshold(restados, 35, 255, cv2.THRESH_BINARY)[1]
-
+            umb.append(umbral)
             contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for contour in contours:
                 # Get the bounding box of the contour
                 x, y, w, h = cv2.boundingRect(umbral)
-
+                
                 # If the contour is too small, skip it
                 if w < 100 or h < 100:
+                   # if w > 20 and h > 20:
+                   #     cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 1)
                     continue
 
+                cv2.rectangle(img, (x, y), (x+w, y+h), (255, 192, 203), 2)
 
+                # Plot the movement on the map
+                ax.plot(x, y, 'ro')
 
+            try: b,g,r= cv2.split(cv2.merge((umb[0],umb[0],umb[0])))
+            except os.error: print(os.error)
+            StartPhoto = cv2.merge((r,r,r))*0.001+cv2.merge((b,b,b))*0.003+StartPhoto
+            tmp.append(img)
             heatmaps.append(umbral)
             i += 1
         h = 0
@@ -162,6 +174,9 @@ while True:
             Cimage = cv2.flip(htmp, 1)
             output_path = "heatmap"+str(h)+".avi"
             save_heatmaps_to_video(Cimage, output_path,h)
+          # Cimage2 = cv2.flip(img[h], 1)
+          # output2_path = "boxes" +str(h)+".avi" #tmp
+          # save_heatmaps_to_video(Cimage2, output2_path,h)
             h+=1
 
         
@@ -180,6 +195,7 @@ while True:
  
 
 if STOP:
+    cv2.imwrite("1.jpg",StartPhoto)
     for htmp in heatmaps:
         Cimage = cv2.flip(htmp, 1)
         output_path = "heatmap.mp4"
