@@ -7,7 +7,7 @@ if not os.path.exists('not-adhd'):
     os.makedirs('not-adhd')
 
 # Open the video file
-video = cv2.VideoCapture('Hmaps/Con_adhd/heatmap2.avi')
+video = cv2.VideoCapture('Hmaps/Con_adhd/heatmap3.avi')
 
 # Initialize frame counter
 count = 0
@@ -24,7 +24,7 @@ while True:
     Finaljpg = cv2.resize(frame,(250,250),interpolation=Image.LANCZOS)
 
     # Save the frame to a file
-    cv2.imwrite(f"Datos/Con_adhd/frame_{count}-2.jpg", Finaljpg)
+    cv2.imwrite(f"Datos/Con_adhd/frame_{count}-3.jpg", Finaljpg)
 
     # Increment the frame counter
     count += 1
