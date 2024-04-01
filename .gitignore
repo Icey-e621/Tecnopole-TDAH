@@ -138,6 +138,10 @@ venv.bak/
 # mkdocs documentation
 /site
 
+#training data
+/Datos
+/Hmaps
+
 # mypy
 .mypy_cache/
 .dmypy.json
