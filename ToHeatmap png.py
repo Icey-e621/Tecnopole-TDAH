@@ -20,7 +20,7 @@ model.multi_label = False  # NMS multiple labels per box
 model.max_det = 1000  # maximum number of detections per image
 model.cpu  # i.e. device=torch.device(0)
 
-video_path = "Videos\SIN_ADHD2.mp4"
+video_path = "Videos\Solo1.mp4"
 cam = cv2.VideoCapture(video_path)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920) 
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
