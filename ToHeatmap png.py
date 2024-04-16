@@ -9,6 +9,7 @@ import zipfile
 from PIL import Image
 
 ADHD = f'Con_adhd'
+mark = f'first'
 
 # load pretrained model
 model = yolov5.load("yolov5m.pt")
@@ -66,7 +67,7 @@ class Person:
 def save_heatmaps_to_png(heatmap, output_path, Ticks):
     Finaljpg = cv2.resize(heatmap,(250,250),interpolation=Image.LANCZOS)
 
-    cv2.imwrite(f'{output_path}/frame-{Ticks}.jpg', Finaljpg)
+    cv2.imwrite(f'{output_path}/{mark}_frame-{Ticks}.jpg', Finaljpg)
 
 
 TimesCalled = 0
