@@ -2,10 +2,6 @@ import os
 import cv2
 from PIL import Image, ImageDraw, ImageFont
 
-# Create a directory to save the extracted frames
-if not os.path.exists('not-adhd'):
-    os.makedirs('not-adhd')
-
 # Open the video file
 video = cv2.VideoCapture('Hmaps/Con_adhd/heatmap3.avi')
 
