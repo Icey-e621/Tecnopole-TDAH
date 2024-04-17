@@ -8,8 +8,9 @@ import torch
 import zipfile
 from PIL import Image
 
-ADHD = f'Con_adhd'
-mark = f'first'
+ADHD = f'Sin_adhd'
+mark = f'fifth'
+video_path = f"Videos/2 fondo, una.mp4"
 
 # load pretrained model
 model = yolov5.load("yolov5m.pt")
@@ -20,7 +21,6 @@ model.multi_label = False  # NMS multiple labels per box
 model.max_det = 1000  # maximum number of detections per image
 model.cpu  # i.e. device=torch.device(0)
 
-video_path = "Videos\Solo1.mp4"
 cam = cv2.VideoCapture(video_path)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920) 
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
@@ -93,8 +93,8 @@ def Capture():
        box.Amplify(10)
        Count += 1
        if TimesCalled == 1:
-           if not os.path.exists(f'Hmaps/{ADHD}/Joe {str(Count)}/'):
-                os.makedirs(f'Hmaps/{ADHD}/Joe {str(Count)}/')
+           if not os.path.exists(f'Hmaps/{ADHD}/Joe{mark} {str(Count)}/'):
+                os.makedirs(f'Hmaps/{ADHD}/Joe{mark} {str(Count)}/')
            People.append(Person(f'Joe {str(Count)}',box))
        else:
             try:
@@ -157,7 +157,7 @@ while True:
         for htmp in heatmaps:
             h += 1
             Cimage = cv2.flip(htmp, 1)
-            output_path = f'Hmaps/{ADHD}/Joe {str(h)}'
+            output_path = f'Hmaps/{ADHD}/Joe{mark} {str(h)}'
             save_heatmaps_to_png(Cimage, output_path,Ticks)
 
         
@@ -168,7 +168,7 @@ while True:
             for htmp in heatmaps:
                 j += 1
                 Cimage = cv2.flip(htmp, 1)
-                output_path = f'Hmaps/{ADHD}/Joe {str(h)}'
+                output_path = f'Hmaps/{ADHD}/Joe{mark} {str(h)}'
                 save_heatmaps_to_png(Cimage, output_path,Ticks)
                 print("ended")
             break
