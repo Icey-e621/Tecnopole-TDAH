@@ -6,6 +6,10 @@ from sympy import frac, true
 import yolov5
 import torch
 import zipfile
+from PIL import Image
+
+ADHD = f'Con_adhd'
+mark = f'first'
 
 # load pretrained model
 model = yolov5.load("yolov5m.pt")
@@ -16,10 +20,10 @@ model.multi_label = False  # NMS multiple labels per box
 model.max_det = 1000  # maximum number of detections per image
 model.cpu  # i.e. device=torch.device(0)
 
-video_path = "example.mp4"
+video_path = "Videos\Solo1.mp4"
 cam = cv2.VideoCapture(video_path)
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280) 
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920) 
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
 People = []
 PeopleAmountInit = 0
@@ -60,22 +64,11 @@ class Person:
    
 
 
-global video_writer; video_writer = []
+def save_heatmaps_to_png(heatmap, output_path, Ticks):
+    Finaljpg = cv2.resize(heatmap,(250,250),interpolation=Image.LANCZOS)
 
-def save_heatmaps_to_video(heatmap, output_path, h):
-    if STOP:
-        video_writer[h].release()
-        return
-    
-    # Create a VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    fps = 20.0
-    frame_size = (heatmap.shape[1], heatmap.shape[0])
+    cv2.imwrite(f'{output_path}/{mark}_frame-{Ticks}.jpg', Finaljpg)
 
-    try: video_writer[h] in globals()
-    except: video_writer.append(cv2.VideoWriter(output_path, fourcc, fps, frame_size))
-
-    video_writer[h].write(cv2.merge((heatmap,heatmap,heatmap)).astype('uint8'))
 
 TimesCalled = 0
 def Capture():
@@ -92,13 +85,17 @@ def Capture():
             NewPredictions.append(Prediction)
 
    Count = 0
+   if not os.path.exists(f'Hmaps/{ADHD}/'):
+       os.makedirs(f'Hmaps/{ADHD}/')
 
    for Prediction in NewPredictions:
        box = Box(Prediction[0],Prediction[1],Prediction[2],Prediction[3])
        box.Amplify(10)
        Count += 1
        if TimesCalled == 1:
-           People.append(Person("Joe " + str(Count),box))
+           if not os.path.exists(f'Hmaps/{ADHD}/Joe {str(Count)}/'):
+                os.makedirs(f'Hmaps/{ADHD}/Joe {str(Count)}/')
+           People.append(Person(f'Joe {str(Count)}',box))
        else:
             try:
                 if not People or Person("Joe " + str(Count),box) == People[Count-1]:
@@ -140,15 +137,15 @@ while True:
 
             restados = cv2.absdiff(grisBefore, grisNow)
 
-            umbral = cv2.threshold(restados, 35, 255, cv2.THRESH_BINARY)[1]
+            umbral = cv2.threshold(restados, 40, 255, cv2.THRESH_BINARY)[1]
 
             contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for contour in contours:
                 # Get the bounding box of the contour
                 x, y, w, h = cv2.boundingRect(umbral)
-
                 # If the contour is too small, skip it
-                if w < 100 or h < 100:
+                if w > 200 or h > 200:
+                    cv2.rectangle(umbral,(x,y),(x+w,y+h),(0,0,0),-1)
                     continue
 
 
@@ -156,34 +153,27 @@ while True:
             heatmaps.append(umbral)
             i += 1
         h = 0
-        zip_filename = "heatmaps.zip"
     
         for htmp in heatmaps:
+            h += 1
             Cimage = cv2.flip(htmp, 1)
-            output_path = "heatmap"+str(h)+".avi"
-            save_heatmaps_to_video(Cimage, output_path,h)
-            h+=1
+            output_path = f'Hmaps/{ADHD}/Joe {str(h)}'
+            save_heatmaps_to_png(Cimage, output_path,Ticks)
 
         
         if cv2.waitKey(0) & 0xFF == ord('q'):
             break
         if STOP:
             j=0
-        
             for htmp in heatmaps:
-                output_path = "heatmap"+str(j)+".avi"
-                print("errasing")
-                j+=1
-            print("ended")
+                j += 1
+                Cimage = cv2.flip(htmp, 1)
+                output_path = f'Hmaps/{ADHD}/Joe {str(h)}'
+                save_heatmaps_to_png(Cimage, output_path,Ticks)
+                print("ended")
             break
     lastImgs = images
  
-
-if STOP:
-    for htmp in heatmaps:
-        Cimage = cv2.flip(htmp, 1)
-        output_path = "heatmap.mp4"
-        save_heatmaps_to_video(Cimage, output_path)
 
 plt.close()
 cam.release()
