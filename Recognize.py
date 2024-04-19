@@ -191,14 +191,13 @@ while True:
         
 
         # Create a grid to hold the smaller images
-        smaller_image_grid = tk.Grid()
-        smaller_image_grid
+
         tk.Label(root, text="Personas en la pantalla en mapas de movimiento (mantenganse quietos)").pack(pady=20)
 
         # Display the smaller images in the grid
         for i, image in enumerate(smaller_images):
             tk_image = ImageTk.PhotoImage(Image.fromarray(image))
-            tk.Label(smaller_image_grid, image=tk_image).grid(row=i // 3, column=i % 3)
+            tk.Label(root, image=tk_image).grid(row=i // 3, column=i % 3)
 
             
 
