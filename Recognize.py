@@ -21,7 +21,7 @@ model.multi_label = False  # NMS multiple labels per box
 model.max_det = 1000  # maximum number of detections per image
 model.cpu  # i.e. device=torch.device(0)
 
-model2 = tf.keras.models.load_model('TDAH.keras')
+#model2 = tf.keras.models.load_model('TDAH.keras')
 
 cam = cv2.VideoCapture(0)
 
@@ -142,14 +142,14 @@ while True:
             umbral = cv2.dilate(umbral, None, iterations=2)
 
             contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            for contour in contours:
-                # Get the bounding box of the contour
-                x, y, w, h = cv2.boundingRect(umbral)
-                
-                # If the contour is too small, skip it
-                if w > img.shape[1]-30 or h > img.shape[0]-30:
-                    cv2.rectangle(umbral,(x,y),(x+w,y+h),(0,255,0),-1)
-                    continue
+            #for contour in contours:
+            #    # Get the bounding box of the contour
+            #    x, y, w, h = cv2.boundingRect(umbral)
+            #    
+            #    # If the contour is too small, skip it
+            #    if w > img.shape[1]-30 or h > img.shape[0]-30:
+            #        cv2.rectangle(umbral,(x,y),(x+w,y+h),(0,255,0),-1)
+            #        continue
 
 
 
@@ -159,59 +159,61 @@ while True:
     
 
 
-        # Create the main window
-        root = tk.Tk()
-
+        ## Create the main window
+        #root = tk.Tk()
+#
         big_image = image
         for Pers in People:
-            cv2.rectangle(big_image,(int(Pers.box.y1),int(Pers.box.y2)),(int(Pers.box.x1),int(Pers.box.x2)),(0,255,0),1)
-
-        big_image_width = root.winfo_screenwidth() // 2
-        big_image_height = root.winfo_screenheight() // 2
-        big_image = cv2.resize(big_image,(big_image_width, big_image_height),interpolation=Image.LANCZOS)
-
-        # Create a label to display the big image
-        big_image_label = tk.Label(root, image=ImageTk.PhotoImage(Image.fromarray(big_image)),text="Person Recognition")
-        big_image_label.pack(pady=50)
-        
-
-
-        # Load the smaller images
-        smaller_images = heatmaps
-
-        smaller_image_width = 150
-        smaller_image_height = int(smaller_image_width // (big_image_width / big_image_height))
-        smaller_images = [cv2.resize(image,(smaller_image_width, smaller_image_height),interpolation=Image.LANCZOS) for image in smaller_images]
-
-        
-        # Create a frame to hold the smaller images
-        smaller_image_frame = tk.Frame(root)
-        smaller_image_frame.pack(pady=50)
+            cv2.rectangle(big_image,(int(Pers.box.x1),int(Pers.box.y1)),(int(Pers.box.x2),int(Pers.box.y2)),(0,255,0),1)
+#
+        #big_image_width = root.winfo_screenwidth() // 2
+        #big_image_height = root.winfo_screenheight() // 2
+        #big_image = cv2.resize(big_image,(big_image_width, big_image_height),interpolation=Image.LANCZOS)
+#
+        ## Create a label to display the big image
+        #big_image_label = tk.Label(root, image=ImageTk.PhotoImage(Image.fromarray(big_image)))
+        #big_image_label.pack(pady=20)
+        #
+#
+#
+        ## Load the smaller images
+        #smaller_images = heatmaps
+#
+        #smaller_image_width = 150
+        #smaller_image_height = int(smaller_image_width // (big_image_width / big_image_height))
+        #smaller_images = [cv2.resize(image,(smaller_image_width, smaller_image_height),interpolation=Image.LANCZOS) for image in smaller_images]
+#
+        #
+        ## Create a frame to hold the smaller images
+        #smaller_image_frame = tk.Frame(root)
+        #smaller_image_frame.pack(pady=20)
 
         
 
         # Create a grid to hold the smaller images
 
-        tk.Label(root, text="Personas en la pantalla en mapas de movimiento (mantenganse quietos)").pack(pady=20)
-
-        # Display the smaller images in the grid
-        for i, image in enumerate(smaller_images):
-            tk_image = ImageTk.PhotoImage(Image.fromarray(image))
-            tk.Label(root, image=tk_image).grid(row=i // 3, column=i % 3)
-
-            
-
-        # Run the main loop
-        root.mainloop()
-
-        #for htmp in heatmaps:
-        #    h += 1
-        #    cv2.imshow
+        #tk.Label(root, text="Personas en la pantalla en mapas de movimiento (mantenganse quietos)").pack(pady=20)
+#
+        ## Display the smaller images in the grid
+        #for i, image in enumerate(smaller_images):
+        #    tk_image = ImageTk.PhotoImage(Image.fromarray(image))
+        #    images_small= tk.Label(smaller_image_frame, image=tk_image)
+        #    images_small.grid(row=i // 3, column=i % 3)
+#
+        #    
+#
+        ## Run the main loop
+        #root.mainloop()
+#
+        for i, htmp in enumerate(heatmaps):
+            h += 1
+            cv2.imshow("Persona "+str(i),htmp)
+        cv2.imshow("Todos", big_image)
             
 
         
-        #if cv2.waitKey(0) & 0xFF == ord('q'):
-        #    break
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            break
 
     lastImgs = images
  
