@@ -1,4 +1,5 @@
 import os
+import tensorflow as tf
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -6,11 +7,10 @@ from sympy import frac, true
 import yolov5
 import torch
 import zipfile
-from PIL import Image
+from PIL import Image, ImageTk
+import tkinter as tk
+import time
 
-ADHD = f'Sin_adhd'
-mark = f'fifth'
-video_path = f"Videos/2 fondo, una.mp4"
 
 # load pretrained model
 model = yolov5.load("yolov5m.pt")
@@ -21,9 +21,9 @@ model.multi_label = False  # NMS multiple labels per box
 model.max_det = 1000  # maximum number of detections per image
 model.cpu  # i.e. device=torch.device(0)
 
-cam = cv2.VideoCapture(video_path)
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920) 
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+#model2 = tf.keras.models.load_model('TDAH.keras')
+
+cam = cv2.VideoCapture(0)
 
 People = []
 PeopleAmountInit = 0
@@ -62,12 +62,11 @@ class Person:
        Message = str(self.name) + " is located in the box made of the points " + str(self.box.Pt1) + " and " + str(self.box.Pt2)
        return str(Message)
    
+Output = 0
+def Recognize(images):
 
+    Data = [cv2.resize(i,(250,250),interpolation=Image.LANCZOS) for i in images]
 
-def save_heatmaps_to_png(heatmap, output_path, Ticks):
-    Finaljpg = cv2.resize(heatmap,(250,250),interpolation=Image.LANCZOS)
-
-    cv2.imwrite(f'{output_path}/{mark}_frame-{Ticks}.jpg', Finaljpg)
 
 
 TimesCalled = 0
@@ -85,16 +84,12 @@ def Capture():
             NewPredictions.append(Prediction)
 
    Count = 0
-   if not os.path.exists(f'Hmaps/{ADHD}/'):
-       os.makedirs(f'Hmaps/{ADHD}/')
 
    for Prediction in NewPredictions:
        box = Box(Prediction[0],Prediction[1],Prediction[2],Prediction[3])
        box.Amplify(10)
        Count += 1
        if TimesCalled == 1:
-           if not os.path.exists(f'Hmaps/{ADHD}/Joe{mark} {str(Count)}/'):
-                os.makedirs(f'Hmaps/{ADHD}/Joe{mark} {str(Count)}/')
            People.append(Person(f'Joe {str(Count)}',box))
        else:
             try:
@@ -108,7 +103,13 @@ def Capture():
             except os.error:
                  print(os.error)
 
+def timer(timerdisplay, t,image):
+    Recon = true
+    root.itemconfigure(timerdisplay, text=t)
+    if t >= 1:
+        root.after(1000, timer, timerdisplay, t-1)
 
+Recon = False
 Capture()
 while True:
     Ticks += 1
@@ -137,16 +138,18 @@ while True:
 
             restados = cv2.absdiff(grisBefore, grisNow)
 
-            umbral = cv2.threshold(restados, 40, 255, cv2.THRESH_BINARY)[1]
+            umbral = cv2.threshold(restados, 25, 255, cv2.THRESH_BINARY)[1]
+            umbral = cv2.dilate(umbral, None, iterations=2)
 
             contours, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            for contour in contours:
-                # Get the bounding box of the contour
-                x, y, w, h = cv2.boundingRect(umbral)
-                # If the contour is too small, skip it
-                if w > 200 or h > 200:
-                    cv2.rectangle(umbral,(x,y),(x+w,y+h),(0,0,0),-1)
-                    continue
+            #for contour in contours:
+            #    # Get the bounding box of the contour
+            #    x, y, w, h = cv2.boundingRect(umbral)
+            #    
+            #    # If the contour is too small, skip it
+            #    if w > img.shape[1]-30 or h > img.shape[0]-30:
+            #        cv2.rectangle(umbral,(x,y),(x+w,y+h),(0,255,0),-1)
+            #        continue
 
 
 
@@ -154,24 +157,64 @@ while True:
             i += 1
         h = 0
     
-        for htmp in heatmaps:
-            h += 1
-            Cimage = cv2.flip(htmp, 1)
-            output_path = f'Hmaps/{ADHD}/Joe{mark} {str(h)}'
-            save_heatmaps_to_png(Cimage, output_path,Ticks)
+
+
+        ## Create the main window
+        #root = tk.Tk()
+#
+        big_image = image
+        for Pers in People:
+            cv2.rectangle(big_image,(int(Pers.box.x1),int(Pers.box.y1)),(int(Pers.box.x2),int(Pers.box.y2)),(0,255,0),1)
+#
+        #big_image_width = root.winfo_screenwidth() // 2
+        #big_image_height = root.winfo_screenheight() // 2
+        #big_image = cv2.resize(big_image,(big_image_width, big_image_height),interpolation=Image.LANCZOS)
+#
+        ## Create a label to display the big image
+        #big_image_label = tk.Label(root, image=ImageTk.PhotoImage(Image.fromarray(big_image)))
+        #big_image_label.pack(pady=20)
+        #
+#
+#
+        ## Load the smaller images
+        #smaller_images = heatmaps
+#
+        #smaller_image_width = 150
+        #smaller_image_height = int(smaller_image_width // (big_image_width / big_image_height))
+        #smaller_images = [cv2.resize(image,(smaller_image_width, smaller_image_height),interpolation=Image.LANCZOS) for image in smaller_images]
+#
+        #
+        ## Create a frame to hold the smaller images
+        #smaller_image_frame = tk.Frame(root)
+        #smaller_image_frame.pack(pady=20)
 
         
-        if cv2.waitKey(0) & 0xFF == ord('q'):
+
+        # Create a grid to hold the smaller images
+
+        #tk.Label(root, text="Personas en la pantalla en mapas de movimiento (mantenganse quietos)").pack(pady=20)
+#
+        ## Display the smaller images in the grid
+        #for i, image in enumerate(smaller_images):
+        #    tk_image = ImageTk.PhotoImage(Image.fromarray(image))
+        #    images_small= tk.Label(smaller_image_frame, image=tk_image)
+        #    images_small.grid(row=i // 3, column=i % 3)
+#
+        #    
+#
+        ## Run the main loop
+        #root.mainloop()
+#
+        for i, htmp in enumerate(heatmaps):
+            h += 1
+            cv2.imshow("Persona "+str(i),htmp)
+        cv2.imshow("Todos", big_image)
+            
+
+        
+        if cv2.waitKey(10) & 0xFF == ord('q'):
             break
-        if STOP:
-            j=0
-            for htmp in heatmaps:
-                j += 1
-                Cimage = cv2.flip(htmp, 1)
-                output_path = f'Hmaps/{ADHD}/Joe{mark} {str(h)}'
-                save_heatmaps_to_png(Cimage, output_path,Ticks)
-                print("ended")
-            break
+
     lastImgs = images
  
 
