@@ -5,12 +5,12 @@ import cv2
 import matplotlib.pyplot as plt
 from sympy import frac, true
 import yolov5
-import torch
-import zipfile
 from PIL import Image, ImageTk
-import tkinter as tk
-import time
+import flask
+from flask import Flask
 
+#load web
+app = Flask(__name__)
 
 # load pretrained model
 model = yolov5.load("yolov5m.pt")
@@ -21,7 +21,7 @@ model.multi_label = False  # NMS multiple labels per box
 model.max_det = 1000  # maximum number of detections per image
 model.cpu  # i.e. device=torch.device(0)
 
-#model2 = tf.keras.models.load_model('TDAH.keras')
+model2 = tf.keras.models.load_model('TDAH.keras')
 
 cam = cv2.VideoCapture(0)
 
@@ -103,12 +103,6 @@ def Capture():
             except os.error:
                  print(os.error)
 
-def timer(timerdisplay, t,image):
-    Recon = true
-    root.itemconfigure(timerdisplay, text=t)
-    if t >= 1:
-        root.after(1000, timer, timerdisplay, t-1)
-
 Recon = False
 Capture()
 while True:
@@ -156,68 +150,47 @@ while True:
             heatmaps.append(umbral)
             i += 1
         h = 0
+
+    #----------------------------------------------------------------------------------#
+
+    @app.route("/")
+    def index():
+        return flask.render_template('index.html')
     
-
-
-        ## Create the main window
-        #root = tk.Tk()
-#
-        big_image = image
-        for Pers in People:
-            cv2.rectangle(big_image,(int(Pers.box.x1),int(Pers.box.y1)),(int(Pers.box.x2),int(Pers.box.y2)),(0,255,0),1)
-#
-        #big_image_width = root.winfo_screenwidth() // 2
-        #big_image_height = root.winfo_screenheight() // 2
-        #big_image = cv2.resize(big_image,(big_image_width, big_image_height),interpolation=Image.LANCZOS)
-#
-        ## Create a label to display the big image
-        #big_image_label = tk.Label(root, image=ImageTk.PhotoImage(Image.fromarray(big_image)))
-        #big_image_label.pack(pady=20)
-        #
-#
-#
-        ## Load the smaller images
-        #smaller_images = heatmaps
-#
-        #smaller_image_width = 150
-        #smaller_image_height = int(smaller_image_width // (big_image_width / big_image_height))
-        #smaller_images = [cv2.resize(image,(smaller_image_width, smaller_image_height),interpolation=Image.LANCZOS) for image in smaller_images]
-#
-        #
-        ## Create a frame to hold the smaller images
-        #smaller_image_frame = tk.Frame(root)
-        #smaller_image_frame.pack(pady=20)
-
+    #render big image
+    
+    def Cap():
+        while True:
+            ret,frame0 = cam.read()
+            big_image = frame0
+            for Pers in People:
+                cv2.rectangle(big_image,(int(Pers.box.x1),int(Pers.box.y1)),(int(Pers.box.x2),int(Pers.box.y2)),(0,255,0),1)
+            if ret:
+                flag, img = cv2.imencode('.jpg', big_image)
+                if not flag:
+                    continue
+                Fimg = img.tobytes()
+                yield(b'--frame\r\n'
+                      b'Content-Type: image/jpeg\r\n\r\n' + Fimg + b'\r\n')
+                
+    #show big image
+    @app.route("/video")
+    def video():
+        return flask.Response(Cap(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+                
+    for i, htmp in enumerate(heatmaps):
+        h += 1
         
 
-        # Create a grid to hold the smaller images
-
-        #tk.Label(root, text="Personas en la pantalla en mapas de movimiento (mantenganse quietos)").pack(pady=20)
-#
-        ## Display the smaller images in the grid
-        #for i, image in enumerate(smaller_images):
-        #    tk_image = ImageTk.PhotoImage(Image.fromarray(image))
-        #    images_small= tk.Label(smaller_image_frame, image=tk_image)
-        #    images_small.grid(row=i // 3, column=i % 3)
-#
-        #    
-#
-        ## Run the main loop
-        #root.mainloop()
-#
-        for i, htmp in enumerate(heatmaps):
-            h += 1
-            cv2.imshow("Persona "+str(i),htmp)
-        cv2.imshow("Todos", big_image)
-            
-
         
-        if cv2.waitKey(10) & 0xFF == ord('q'):
-            break
+    if __name__ == '__main__':
+        app.run(debug=True, port=8001,use_reloader=False)
+        
+    plt.close()
+    cam.release()
+    cv2.destroyAllWindows()
+    #----------------------------------------------------------------------------------#
 
     lastImgs = images
  
 
-plt.close()
-cam.release()
-cv2.destroyAllWindows()
