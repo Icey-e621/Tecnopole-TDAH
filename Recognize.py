@@ -5,11 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 from sympy import frac, true
 import yolov5
-import torch
-import zipfile
-from PIL import Image, ImageTk
-import tkinter as tk
-import time
+from PIL import Image
 
 
 # load pretrained model
@@ -102,12 +98,6 @@ def Capture():
 
             except os.error:
                  print(os.error)
-
-def timer(timerdisplay, t,image):
-    Recon = true
-    root.itemconfigure(timerdisplay, text=t)
-    if t >= 1:
-        root.after(1000, timer, timerdisplay, t-1)
 
 Recon = False
 Capture()
