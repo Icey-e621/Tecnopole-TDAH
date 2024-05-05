@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TDAH</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/index.css') }}">
+    <header>
+        <h1 class="centered">TDAH y la IA</h1>
+        <p class="centered">Esta web enseña las características principales del proyecto</p>
+    </header>
+</head>
+<body>
+    <main>
+        <section>
+            <p>Esto es lo que la cámara ve con contornos ejecutados.</p>
+            <img src="{{ url_for('video') }}">
+        </section>
+    </main> 
+</body>
+</html>
